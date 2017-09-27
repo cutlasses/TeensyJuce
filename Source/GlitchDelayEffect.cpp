@@ -17,7 +17,7 @@ const float MAX_SPEED( 4.0f );
 
 #ifdef TARGET_JUCE
 const int AUDIO_BLOCK_SAMPLES( 512 );           // TODO need a value in JUCE, is it even constant?
-const int AUDIO_SAMPLE_RATE( 44000 );           // TODO need a value in JUCE
+const int AUDIO_SAMPLE_RATE( 44100 );           // TODO need a value in JUCE
 #endif
 
 const int FIXED_FADE_TIME_SAMPLES( (AUDIO_SAMPLE_RATE / 1000.0f ) * 4 ); // 4ms cross fade
@@ -397,21 +397,21 @@ void PLAY_HEAD::disable_loop()
 #ifdef DEBUG_OUTPUT
 void PLAY_HEAD::debug_output()
 {
-  DEBUG_PRINT("PLAY_HEAD current:");
-  DEBUG_PRINT(m_current_play_head);
-  DEBUG_PRINT(" destination:");
-  DEBUG_PRINT(m_destination_play_head);
-  DEBUG_PRINT(" loop start:");
-  DEBUG_PRINT(m_loop_start);
-  DEBUG_PRINT(" loop end:");
-  DEBUG_PRINT(m_loop_end);
-  DEBUG_PRINT(" fade samples:");
-  DEBUG_PRINT(m_fade_samples_remaining);
+  DEBUG_TEXT("PLAY_HEAD current:");
+  DEBUG_TEXT(m_current_play_head);
+  DEBUG_TEXT(" destination:");
+  DEBUG_TEXT(m_destination_play_head);
+  DEBUG_TEXT(" loop start:");
+  DEBUG_TEXT(m_loop_start);
+  DEBUG_TEXT(" loop end:");
+  DEBUG_TEXT(m_loop_end);
+  DEBUG_TEXT(" fade samples:");
+  DEBUG_TEXT(m_fade_samples_remaining);
   if( !m_initial_loop_crossfade_complete )
   {
-    DEBUG_PRINT(" INITIAL CF");
+    DEBUG_TEXT(" INITIAL CF");
   }
-  DEBUG_PRINT("\n");
+  DEBUG_TEXT("\n");
 }
 #endif
 
