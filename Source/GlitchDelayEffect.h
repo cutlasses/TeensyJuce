@@ -3,10 +3,6 @@
 #include "TeensyJuce.h"
 #include "Util.h"
 
-#ifdef TARGET_TEENSY
-#include <AudioStream.h>
-#endif
-
 #define DELAY_BUFFER_SIZE_IN_BYTES     1024*240      // 240k
 
 ////////////////////////////////////
