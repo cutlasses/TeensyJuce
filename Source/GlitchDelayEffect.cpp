@@ -718,6 +718,16 @@ GLITCH_DELAY_EFFECT::GLITCH_DELAY_EFFECT() :
 
 }
 
+void GLITCH_DELAY_EFFECT::process_audio_in( int channel, const int16_t* samples )
+{
+    
+}
+
+void GLITCH_DELAY_EFFECT::process_audio_out( int channel, int16_t samples, int num_samples )
+{
+    
+}
+
 void GLITCH_DELAY_EFFECT::update()
 {
 #ifdef TARGET_TEENSY

@@ -34,7 +34,6 @@ bool _assert_fail( const char* assert, const char* msg )
 template<typename T> void DEBUG_TEXT( T t )
 {
     std::cout << t;
-    
 }
 
 #endif // !TARGET_TEENSY
@@ -103,7 +102,7 @@ T lerp( const T& v1, const T& v2, float t )
 
 /////////////////////////////////////////////////////
 
-int trunc_to_int( float v )
+inline int trunc_to_int( float v )
 {
   return static_cast<int>( v );
 }
@@ -175,9 +174,18 @@ int random( int max )
 }
  */
 #include <stdlib.h>
-int random( int max )
+inline int random( int max )
 {
     return static_cast<int>( ( static_cast<float>( rand() ) / RAND_MAX ) * max );
+}
+
+/////////////////////////////////////////////////////
+
+// no c++14 on xcode 7
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
 #endif

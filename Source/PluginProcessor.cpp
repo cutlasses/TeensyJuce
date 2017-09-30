@@ -11,6 +11,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include "GlitchDelayEffect.h"
+
 
 //==============================================================================
 TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
@@ -25,6 +27,8 @@ TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
                        )
 #endif
 {
+    // create the wrapped effect
+    m_effect = make_unique< GLITCH_DELAY_EFFECT >();
 }
 
 TeensyJuceAudioProcessor::~TeensyJuceAudioProcessor()
@@ -132,28 +136,13 @@ bool TeensyJuceAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
-    ScopedNoDenormals noDenormals;
-    const int totalNumInputChannels  = getTotalNumInputChannels();
-    const int totalNumOutputChannels = getTotalNumOutputChannels();
-
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        const int buffer_size = buffer.getNumSamples();
-        float* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
-    }
+    ScopedNoDenormals no_denormals;
+    
+    m_effect->pre_process_audio( buffer, getTotalNumInputChannels(), getTotalNumOutputChannels() );
+    
+    m_effect->update();
+    
+    m_effect->post_process_audio( buffer );
 }
 
 //==============================================================================

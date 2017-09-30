@@ -13,6 +13,7 @@
               pluginAAXCategory="AAX_ePlugInCategory_Dynamics" jucerVersion="5.1.2">
   <MAINGROUP id="HSjYTo" name="TeensyJuce">
     <GROUP id="{F36DAE87-76F9-80B5-F9AD-77AFED34B051}" name="Source">
+      <FILE id="oV70iI" name="TeensyJuce.cpp" compile="1" resource="0" file="Source/TeensyJuce.cpp"/>
       <FILE id="upJzGH" name="TeensyJuce.h" compile="0" resource="0" file="Source/TeensyJuce.h"/>
       <FILE id="JqP7PQ" name="CompileSwitches.h" compile="0" resource="0"
             file="Source/CompileSwitches.h"/>
