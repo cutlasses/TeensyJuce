@@ -23,8 +23,8 @@ class TEENSY_AUDIO_STREAM_WRAPPER : public AudioStream
 protected:
     
     // these are the only functions that require bespoke Teensy code
-    virtual void            process_audio_in( int channel, const int16_t* samples, int num_samples ) = 0;
-    virtual void            process_audio_out( int channel, int16_t samples, int num_samples ) = 0;
+    virtual bool            process_audio_in( int channel ) = 0;
+    virtual bool            process_audio_out( int channel ) = 0;
     
 public:
     
@@ -47,18 +47,18 @@ public:
 
 class TEENSY_AUDIO_STREAM_WRAPPER
 {
-    // store the 16-bit in/out buffers
-    typedef std::vector< int16_t >  SAMPLE_BUFFER;
-    std::vector< SAMPLE_BUFFER >    m_channel_buffers;
-    
     int                             m_num_input_channels;
     int                             m_num_output_channels;
     
 protected:
+ 
+    // store the 16-bit in/out buffers
+    typedef std::vector< int16_t >  SAMPLE_BUFFER;
+    std::vector< SAMPLE_BUFFER >    m_channel_buffers;
     
     // these are the only functions that require bespoke JUCE code
-    virtual void                    process_audio_in( int channel, const int16_t* samples ) = 0;
-    virtual void                    process_audio_out( int channel, int16_t samples, int num_samples ) = 0;
+    virtual bool                    process_audio_in( int channel ) = 0;
+    virtual bool                    process_audio_out( int channel ) = 0;
     
 public:
     

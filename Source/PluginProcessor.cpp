@@ -140,7 +140,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     m_effect->pre_process_audio( buffer, getTotalNumInputChannels(), getTotalNumOutputChannels() );
     
-    m_effect->update();
+    //m_effect->update();
     
     m_effect->post_process_audio( buffer );
 }

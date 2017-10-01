@@ -139,8 +139,8 @@ class GLITCH_DELAY_EFFECT : public TEENSY_AUDIO_STREAM_WRAPPER
     
 protected:
     
-    void                    process_audio_in( int channel, const int16_t* samples ) override;
-    void                    process_audio_out( int channel, int16_t samples, int num_samples ) override;
+    bool                process_audio_in( int channel ) override;
+    bool                process_audio_out( int channel ) override;
   
 public:
 

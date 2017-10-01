@@ -718,73 +718,111 @@ GLITCH_DELAY_EFFECT::GLITCH_DELAY_EFFECT() :
 
 }
 
-void GLITCH_DELAY_EFFECT::process_audio_in( int channel, const int16_t* samples )
+#ifdef TARGET_TEENSY
+bool GLITCH_DELAY_EFFECT::process_audio_in( int channel )
 {
+    audio_block_t* read_block        = receiveReadOnly();
     
+    if( read_block != nullptr )
+    {
+        m_delay_buffer.write_to_buffer( read_block->data, AUDIO_BLOCK_SAMPLES );
+        release( read_block );
+        
+        return true;
+    }
+    
+    return false;
 }
 
-void GLITCH_DELAY_EFFECT::process_audio_out( int channel, int16_t samples, int num_samples )
+bool GLITCH_DELAY_EFFECT::process_audio_out( int channel )
 {
+    audio_block_t* write_block = allocate();
     
+    if( write_block != nullptr )
+    {
+        ASSERT_MSG( !m_play_heads[pi].position_inside_next_read( m_delay_buffer.write_head(), AUDIO_BLOCK_SAMPLES ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
+        m_play_heads[pi].read_from_play_head( write_block->data, AUDIO_BLOCK_SAMPLES );
+        
+        transmit( write_block, pi );
+        
+        release( write_block );
+        
+        return true;
+    }
+    
+    return false;
 }
+#endif // TARGET_TEENSY
+
+#ifdef TARGET_JUCE
+bool GLITCH_DELAY_EFFECT::process_audio_in( int channel )
+{
+    const SAMPLE_BUFFER& sample_buffer = m_channel_buffers[ channel ];
+    
+    if( !sample_buffer.empty() )
+    {
+        m_delay_buffer.write_to_buffer( sample_buffer.data(), static_cast<int>(sample_buffer.size()) );
+    }
+
+    return false;
+}
+
+bool GLITCH_DELAY_EFFECT::process_audio_out( int channel )
+{
+    SAMPLE_BUFFER& sample_buffer = m_channel_buffers[ channel ];
+    
+    if( !sample_buffer.empty() )
+    {
+        ASSERT_MSG( !m_play_heads[channel].position_inside_next_read( m_delay_buffer.write_head(), AUDIO_BLOCK_SAMPLES ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
+        m_play_heads[channel].read_from_play_head( sample_buffer.data(), static_cast<int>(sample_buffer.size()) );
+    }
+    
+    return false;
+
+}
+
+#endif // TARGET_JUCE
 
 void GLITCH_DELAY_EFFECT::update()
 {
-#ifdef TARGET_TEENSY
-  m_delay_buffer.set_bit_depth( m_next_sample_size_in_bits );
-  m_loop_moving               = m_next_loop_moving;
-
-  for( int pi = 0; pi < NUM_PLAY_HEADS; ++pi )
-  {
-    if( m_loop_moving )
-    {
-      m_play_heads[pi].set_shift_speed( m_speed_ratio );
-    }
-    else
-    {
-      m_play_heads[pi].set_shift_speed( 0.0f );
-      m_play_heads[pi].set_jitter( m_speed_ratio );
-    }
-  
-    m_play_heads[pi].set_loop_size( m_loop_size_ratio );
-  
-    // check whether the write head is about to run over the read head, in which case cross fade read head to new position
-    if( m_play_heads[pi].position_inside_section( m_delay_buffer.write_head(), m_play_heads[pi].buffered_loop_start(), m_play_heads[pi].loop_end() ) )
-    {
-      m_play_heads[pi].set_loop_behind_write_head();
-    }
-    else if( m_next_beat && !m_play_heads[pi].crossfade_active() )
-    {
-      m_play_heads[pi].set_next_loop();
-      m_play_heads[pi].set_loop_behind_write_head();
-    }
-  }
-  m_next_beat = false;
-  
-
-  audio_block_t* read_block        = receiveReadOnly();
-
-  if( read_block != nullptr )
-  {
-    m_delay_buffer.write_to_buffer( read_block->data, AUDIO_BLOCK_SAMPLES );
-    release( read_block );
-
+    m_delay_buffer.set_bit_depth( m_next_sample_size_in_bits );
+    m_loop_moving               = m_next_loop_moving;
+    
     for( int pi = 0; pi < NUM_PLAY_HEADS; ++pi )
     {
-      audio_block_t* write_block = allocate();
-
-      if( write_block != nullptr )
-      {
-        ASSERT_MSG( !m_play_heads[pi].position_inside_next_read( m_delay_buffer.write_head(), AUDIO_BLOCK_SAMPLES ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
-        m_play_heads[pi].read_from_play_head( write_block->data, AUDIO_BLOCK_SAMPLES );
-    
-        transmit( write_block, pi );
-    
-        release( write_block ); // note is this legal? may want to allocate a new block each time
-      }
+        if( m_loop_moving )
+        {
+            m_play_heads[pi].set_shift_speed( m_speed_ratio );
+        }
+        else
+        {
+            m_play_heads[pi].set_shift_speed( 0.0f );
+            m_play_heads[pi].set_jitter( m_speed_ratio );
+        }
+        
+        m_play_heads[pi].set_loop_size( m_loop_size_ratio );
+        
+        // check whether the write head is about to run over the read head, in which case cross fade read head to new position
+        if( m_play_heads[pi].position_inside_section( m_delay_buffer.write_head(), m_play_heads[pi].buffered_loop_start(), m_play_heads[pi].loop_end() ) )
+        {
+            m_play_heads[pi].set_loop_behind_write_head();
+        }
+        else if( m_next_beat && !m_play_heads[pi].crossfade_active() )
+        {
+            m_play_heads[pi].set_next_loop();
+            m_play_heads[pi].set_loop_behind_write_head();
+        }
     }
-  }
-#endif
+    m_next_beat = false;
+    
+    // read in on channel 0
+    process_audio_in( 0 );
+    
+    // write out all the playheads
+    for( int pi = 0; pi < NUM_PLAY_HEADS; ++pi )
+    {
+        process_audio_out( pi );
+    }
 }
 
 void GLITCH_DELAY_EFFECT::set_bit_depth( int sample_size_in_bits )

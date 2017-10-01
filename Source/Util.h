@@ -174,6 +174,7 @@ int random( int max )
 }
  */
 #include <stdlib.h>
+#include <memory>
 inline int random( int max )
 {
     return static_cast<int>( ( static_cast<float>( rand() ) / RAND_MAX ) * max );

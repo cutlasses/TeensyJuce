@@ -29,17 +29,17 @@ namespace
     float sample_convert_int16_to_float( int16_t s )
     {
         float sf = s / static_cast<float>( std::numeric_limits< int16_t >::max() );
-        sf = ( sf * 2.0f ) + 1.0f;
-        ASSERT_MSG( s >= -1.0f && s <= 1.0f, "Sample out of range" );
+        sf = ( sf * 2.0f ) - 1.0f;
+        ASSERT_MSG( sf >= -1.0f && sf <= 1.0f, "Sample out of range" );
         
         return sf;
     }
 }
 
 TEENSY_AUDIO_STREAM_WRAPPER::TEENSY_AUDIO_STREAM_WRAPPER() :
-    m_channel_buffers(),
     m_num_input_channels(0),
-    m_num_output_channels(0)
+    m_num_output_channels(0),
+    m_channel_buffers()
 {
     
 }
