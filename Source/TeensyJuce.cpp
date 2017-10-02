@@ -44,7 +44,7 @@ bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_in( int channel )
     
     if( read_block != nullptr )
     {
-        m_delay_buffer.write_to_buffer( read_block->data, AUDIO_BLOCK_SAMPLES );
+        process_audio_in_impl( channel, read_block->data, AUDIO_BLOCK_SAMPLES );
         release( read_block );
         
         return true;
@@ -59,8 +59,7 @@ bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_out( int channel )
     
     if( write_block != nullptr )
     {
-        ASSERT_MSG( !m_play_heads[pi].position_inside_next_read( m_delay_buffer.write_head(), AUDIO_BLOCK_SAMPLES ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
-        m_play_heads[pi].read_from_play_head( write_block->data, AUDIO_BLOCK_SAMPLES );
+        process_audio_out_impl( channel, write_block->data, AUDIO_BLOCK_SAMPLES );
         
         transmit( write_block, pi );
         
