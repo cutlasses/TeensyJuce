@@ -36,6 +36,47 @@ namespace
     }
 }
 
+#ifdef TARGET_TEENSY
+
+bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_in( int channel )
+{
+    audio_block_t* read_block        = receiveReadOnly();
+    
+    if( read_block != nullptr )
+    {
+        m_delay_buffer.write_to_buffer( read_block->data, AUDIO_BLOCK_SAMPLES );
+        release( read_block );
+        
+        return true;
+    }
+    
+    return false;
+}
+
+bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_out( int channel )
+{
+    audio_block_t* write_block = allocate();
+    
+    if( write_block != nullptr )
+    {
+        ASSERT_MSG( !m_play_heads[pi].position_inside_next_read( m_delay_buffer.write_head(), AUDIO_BLOCK_SAMPLES ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
+        m_play_heads[pi].read_from_play_head( write_block->data, AUDIO_BLOCK_SAMPLES );
+        
+        transmit( write_block, pi );
+        
+        release( write_block );
+        
+        return true;
+    }
+    
+    return false;
+}
+#endif // TARGET_TEENSY
+
+////////////////////////////////////////////////////////////////////////
+
+#ifdef TARGET_JUCE
+
 TEENSY_AUDIO_STREAM_WRAPPER::TEENSY_AUDIO_STREAM_WRAPPER() :
     m_num_input_channels(0),
     m_num_output_channels(0),
@@ -48,6 +89,30 @@ TEENSY_AUDIO_STREAM_WRAPPER::~TEENSY_AUDIO_STREAM_WRAPPER()
 {
 }
 
+bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_in( int channel )
+{
+    const SAMPLE_BUFFER& sample_buffer = m_channel_buffers[ channel ];
+    
+    if( !sample_buffer.empty() )
+    {
+        process_audio_in_impl( channel, sample_buffer.data(), static_cast<int>(sample_buffer.size()) );
+    }
+    
+    return false;
+}
+
+bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_out( int channel )
+{
+    SAMPLE_BUFFER& sample_buffer = m_channel_buffers[ channel ];
+    
+    if( !sample_buffer.empty() )
+    {
+        process_audio_out_impl( channel, sample_buffer.data(), static_cast<int>(sample_buffer.size()) );
+    }
+    
+    return false;
+    
+}
 
 void TEENSY_AUDIO_STREAM_WRAPPER::pre_process_audio( const AudioSampleBuffer& audio_in, int num_input_channels, int num_output_channels )
 {
@@ -96,3 +161,5 @@ void TEENSY_AUDIO_STREAM_WRAPPER::post_process_audio( AudioSampleBuffer& audio_o
         }
     }
 }
+
+#endif // TARGET_JUCE

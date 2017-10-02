@@ -718,70 +718,19 @@ GLITCH_DELAY_EFFECT::GLITCH_DELAY_EFFECT() :
 
 }
 
-#ifdef TARGET_TEENSY
-bool GLITCH_DELAY_EFFECT::process_audio_in( int channel )
+void GLITCH_DELAY_EFFECT::process_audio_in_impl( int channel, const int16_t* sample_data, int num_samples )
 {
-    audio_block_t* read_block        = receiveReadOnly();
+    ASSERT_MSG( channel == 0, "Only mono input supported" );
     
-    if( read_block != nullptr )
-    {
-        m_delay_buffer.write_to_buffer( read_block->data, AUDIO_BLOCK_SAMPLES );
-        release( read_block );
-        
-        return true;
-    }
-    
-    return false;
+    m_delay_buffer.write_to_buffer( sample_data, num_samples );
 }
 
-bool GLITCH_DELAY_EFFECT::process_audio_out( int channel )
+void GLITCH_DELAY_EFFECT::process_audio_out_impl( int channel, int16_t* sample_data, int num_samples )
 {
-    audio_block_t* write_block = allocate();
-    
-    if( write_block != nullptr )
-    {
-        ASSERT_MSG( !m_play_heads[pi].position_inside_next_read( m_delay_buffer.write_head(), AUDIO_BLOCK_SAMPLES ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
-        m_play_heads[pi].read_from_play_head( write_block->data, AUDIO_BLOCK_SAMPLES );
-        
-        transmit( write_block, pi );
-        
-        release( write_block );
-        
-        return true;
-    }
-    
-    return false;
+
+    ASSERT_MSG( !m_play_heads[pi].position_inside_next_read( m_delay_buffer.write_head(), num_samples ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
+    m_play_heads[channel].read_from_play_head( sample_data, num_samples );
 }
-#endif // TARGET_TEENSY
-
-#ifdef TARGET_JUCE
-bool GLITCH_DELAY_EFFECT::process_audio_in( int channel )
-{
-    const SAMPLE_BUFFER& sample_buffer = m_channel_buffers[ channel ];
-    
-    if( !sample_buffer.empty() )
-    {
-        m_delay_buffer.write_to_buffer( sample_buffer.data(), static_cast<int>(sample_buffer.size()) );
-    }
-
-    return false;
-}
-
-bool GLITCH_DELAY_EFFECT::process_audio_out( int channel )
-{
-    SAMPLE_BUFFER& sample_buffer = m_channel_buffers[ channel ];
-    
-    if( !sample_buffer.empty() )
-    {
-        ASSERT_MSG( !m_play_heads[channel].position_inside_next_read( m_delay_buffer.write_head(), AUDIO_BLOCK_SAMPLES ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
-        m_play_heads[channel].read_from_play_head( sample_buffer.data(), static_cast<int>(sample_buffer.size()) );
-    }
-    
-    return false;
-
-}
-
-#endif // TARGET_JUCE
 
 void GLITCH_DELAY_EFFECT::update()
 {
@@ -818,11 +767,13 @@ void GLITCH_DELAY_EFFECT::update()
     // read in on channel 0
     process_audio_in( 0 );
     
-    // write out all the playheads
-    for( int pi = 0; pi < NUM_PLAY_HEADS; ++pi )
+    process_audio_out(0);
+    
+    // write out all the playheads TODO this uses more output than there are channels!!
+    /*for( int pi = 0; pi < NUM_PLAY_HEADS; ++pi )
     {
         process_audio_out( pi );
-    }
+    }*/
 }
 
 void GLITCH_DELAY_EFFECT::set_bit_depth( int sample_size_in_bits )

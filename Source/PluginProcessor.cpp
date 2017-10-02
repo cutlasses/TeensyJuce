@@ -20,9 +20,9 @@ TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  AudioChannelSet::stereo(), true)
+                       .withInput  ("Input",  AudioChannelSet::mono(), true)
                       #endif
-                       .withOutput ("Output", AudioChannelSet::stereo(), true)
+                       .withOutput ("Output", AudioChannelSet::mono(), true)
                      #endif
                        )
 #endif
@@ -140,7 +140,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     m_effect->pre_process_audio( buffer, getTotalNumInputChannels(), getTotalNumOutputChannels() );
     
-    //m_effect->update();
+    m_effect->update();
     
     m_effect->post_process_audio( buffer );
 }
