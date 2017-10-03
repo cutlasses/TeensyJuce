@@ -732,6 +732,16 @@ void GLITCH_DELAY_EFFECT::process_audio_out_impl( int channel, int16_t* sample_d
     m_play_heads[channel].read_from_play_head( sample_data, num_samples );
 }
 
+int GLITCH_DELAY_EFFECT::num_input_channels() const
+{
+    return 1;
+}
+
+int GLITCH_DELAY_EFFECT::num_output_channels() const
+{
+    return 3;
+}
+
 void GLITCH_DELAY_EFFECT::update()
 {
     m_delay_buffer.set_bit_depth( m_next_sample_size_in_bits );
@@ -767,13 +777,11 @@ void GLITCH_DELAY_EFFECT::update()
     // read in on channel 0
     process_audio_in( 0 );
     
-    process_audio_out(0);
-    
     // write out all the playheads TODO this uses more output than there are channels!!
-    /*for( int pi = 0; pi < NUM_PLAY_HEADS; ++pi )
+    for( int pi = 0; pi < NUM_PLAY_HEADS; ++pi )
     {
         process_audio_out( pi );
-    }*/
+    }
 }
 
 void GLITCH_DELAY_EFFECT::set_bit_depth( int sample_size_in_bits )

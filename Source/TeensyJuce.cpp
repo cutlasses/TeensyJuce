@@ -95,6 +95,8 @@ bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_in( int channel )
     if( !sample_buffer.empty() )
     {
         process_audio_in_impl( channel, sample_buffer.data(), static_cast<int>(sample_buffer.size()) );
+        
+        return true;
     }
     
     return false;
@@ -107,6 +109,8 @@ bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_out( int channel )
     if( !sample_buffer.empty() )
     {
         process_audio_out_impl( channel, sample_buffer.data(), static_cast<int>(sample_buffer.size()) );
+        
+        return true;
     }
     
     return false;
@@ -133,15 +137,19 @@ void TEENSY_AUDIO_STREAM_WRAPPER::pre_process_audio( const AudioSampleBuffer& au
         SAMPLE_BUFFER samples;
         samples.reserve( num_samples );
         
-        // is this an input channel
+        // is this an input/output channel
         if( c < num_input_channels )
         {
-            //const float* sample_data = audio_in.getReadPointer( c );
             for( int s = 0; s < num_samples; ++s )
             {
                 const float sample = audio_in.getSample( 0, s );
                 samples.push_back( sample_convert_float_to_int16( sample ) );
             }
+        }
+        // this is an output only channel
+        else
+        {
+            samples.resize( num_samples, 0.0f );
         }
         
         m_channel_buffers.emplace_back( samples );

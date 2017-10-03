@@ -40,6 +40,9 @@ public:
     }
     
     virtual ~TEENSY_AUDIO_STREAM_WRAPPER()      {;}
+    
+    virtual int                     num_input_channels() const = 0;
+    virtual int                     num_output_channels() const = 0;
 };
 
 #endif // TARGET_TEENSY
@@ -76,6 +79,9 @@ public:
     
     void                            pre_process_audio( const AudioSampleBuffer& audio_in, int num_input_channels, int num_output_channels );
     void                            post_process_audio( AudioSampleBuffer& audio_out );
+    
+    virtual int                     num_input_channels() const = 0;
+    virtual int                     num_output_channels() const = 0;
     
     virtual void                    update() = 0;
 };

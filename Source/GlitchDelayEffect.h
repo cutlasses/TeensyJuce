@@ -145,6 +145,9 @@ protected:
 public:
 
   GLITCH_DELAY_EFFECT();
+    
+  int                   num_input_channels() const override;
+  int                   num_output_channels() const override;
 
   void                  update() override;
 

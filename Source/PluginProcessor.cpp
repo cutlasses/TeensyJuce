@@ -8,11 +8,36 @@
   ==============================================================================
 */
 
+#include <array>
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 #include "GlitchDelayEffect.h"
 
+namespace
+{
+    template< size_t N >
+    void mix_down( AudioSampleBuffer& buffer, std::array<float, N > weights )
+    {
+        jassert( buffer.getNumChannels() == N );
+        
+        float reciprocal = 1.0f / N;
+        
+        for( int s = 0; s < buffer.getNumSamples(); ++s )
+        {
+            float mixed = 0.0f;
+            for( int c = 0; c < buffer.getNumChannels(); ++c )
+            {
+                mixed += buffer.getSample( c, s ) * weights[ c ];
+            }
+            
+            mixed *= reciprocal;
+            
+            buffer.setSample( 0, s, mixed );
+        }
+    }
+}
 
 //==============================================================================
 TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
@@ -138,11 +163,25 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
 {
     ScopedNoDenormals no_denormals;
     
-    m_effect->pre_process_audio( buffer, getTotalNumInputChannels(), getTotalNumOutputChannels() );
+    // blend feedback
+    
+    m_effect->pre_process_audio( buffer, m_effect->num_input_channels(), m_effect->num_output_channels() );
     
     m_effect->update();
     
-    m_effect->post_process_audio( buffer );
+    AudioSampleBuffer output( m_effect->num_output_channels(), buffer.getNumSamples() );
+    m_effect->post_process_audio( output );
+    
+    // mix down effect output to 1 channel
+    std::array<float, 3> mix_weights = { 0.25f, 0.5f, 0.25f };
+    mix_down( output, mix_weights );
+    
+    // mix output with original input
+    
+    // copy our mixed output to channel 0 of buffer
+    buffer.copyFrom( 0, 0, output, 0, 0, output.getNumSamples() );
+    
+    // setup feedback for next block
 }
 
 //==============================================================================
