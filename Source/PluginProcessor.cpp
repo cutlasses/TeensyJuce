@@ -17,12 +17,11 @@
 
 namespace
 {
+    // mixdown N channels of buffer into channel 0, using the weights array
     template< size_t N >
     void mix_down( AudioSampleBuffer& buffer, std::array<float, N > weights )
     {
         jassert( buffer.getNumChannels() == N );
-        
-        float reciprocal = 1.0f / N;
         
         for( int s = 0; s < buffer.getNumSamples(); ++s )
         {
@@ -32,9 +31,20 @@ namespace
                 mixed += buffer.getSample( c, s ) * weights[ c ];
             }
             
-            mixed *= reciprocal;
-            
             buffer.setSample( 0, s, mixed );
+        }
+    }
+    
+    // mix buffer b2 into b1 using weights w1, w2
+    void mix_into( AudioSampleBuffer& b1, AudioSampleBuffer& b2, int channel, float w1, float w2 )
+    {
+        jassert( b1.getNumChannels() > channel && b2.getNumChannels() > channel );
+        
+        for( int s = 0; s < b1.getNumSamples(); ++s )
+        {
+            float mixed = ( b1.getSample( channel, s ) * w1 ) + ( b2.getSample( channel, s ) * w2 );
+            
+            b1.setSample( channel, s, mixed );
         }
     }
 }
@@ -163,7 +173,16 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
 {
     ScopedNoDenormals no_denormals;
     
-    // blend feedback
+    if( m_prev_buffer.getNumChannels() != 1 || m_prev_buffer.getNumSamples() != buffer.getNumSamples() )
+    {
+        // set size of prev_buffer if not correct dimensions
+        m_prev_buffer.setSize( 1, buffer.getNumSamples() );
+    }
+    else
+    {
+        // blend feedback into input
+        mix_into( buffer, m_prev_buffer, 0, 0.5f, 0.5f );
+    }
     
     m_effect->pre_process_audio( buffer, m_effect->num_input_channels(), m_effect->num_output_channels() );
     
@@ -182,6 +201,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     buffer.copyFrom( 0, 0, output, 0, 0, output.getNumSamples() );
     
     // setup feedback for next block
+    m_prev_buffer.copyFrom( 0, 0, output, 0, 0, output.getNumSamples() );
 }
 
 //==============================================================================

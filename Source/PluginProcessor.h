@@ -61,6 +61,7 @@ public:
 private:
     
     std::unique_ptr<TEENSY_AUDIO_STREAM_WRAPPER>                m_effect;
+    AudioSampleBuffer                                           m_prev_buffer;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TeensyJuceAudioProcessor)
