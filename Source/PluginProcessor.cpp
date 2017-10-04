@@ -177,6 +177,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     {
         // set size of prev_buffer if not correct dimensions
         m_prev_buffer.setSize( 1, buffer.getNumSamples() );
+        m_prev_buffer.clear( 0, 0, m_prev_buffer.getNumSamples() );
     }
     else
     {

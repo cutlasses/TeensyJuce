@@ -26,10 +26,9 @@ bool _assert_fail( const char* assert, const char* msg )
 
 #else // !TARGET_TEENSY
 
-#include <cassert>
 #include <iostream>
 
-#define ASSERT_MSG(x, msg)      assert( x )
+#define ASSERT_MSG(x, msg)      jassert( x )
 
 template<typename T> void DEBUG_TEXT( T t )
 {

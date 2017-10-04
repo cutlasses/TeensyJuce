@@ -84,6 +84,11 @@ PLAY_HEAD::PLAY_HEAD( const DELAY_BUFFER& delay_buffer, float play_speed ) :
   m_initial_loop_crossfade_complete(false)
 {
   set_loop_behind_write_head();
+  
+  // set head immediately (don't want to crossfade initially)
+  m_current_play_head                 = m_destination_play_head;
+  m_initial_loop_crossfade_complete   = true;
+  m_fade_samples_remaining            = 0;
 }
 
 int PLAY_HEAD::current_position() const

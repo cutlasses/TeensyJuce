@@ -18,18 +18,20 @@ namespace
     // convert float sample [-1..1] to int16
     int16_t sample_convert_float_to_int16( float s )
     {
-        // put in the range 0 .. 1
-        s = ( s + 1.0f ) * 0.5f;
-        ASSERT_MSG( s >= 0.0f && s <= 1.0f, "Sample out of range" );
-        
-        return s * std::numeric_limits< int16_t >::max();
+        if( s > 0.0f )
+        {
+            return s * std::numeric_limits< int16_t >::max();
+        }
+        else
+        {
+            return s * std::numeric_limits< int16_t >::min();
+        }
     }
     
     // convert in16 sample to float [-1..1]
     float sample_convert_int16_to_float( int16_t s )
     {
         float sf = s / static_cast<float>( std::numeric_limits< int16_t >::max() );
-        sf = ( sf * 2.0f ) - 1.0f;
         ASSERT_MSG( sf >= -1.0f && sf <= 1.0f, "Sample out of range" );
         
         return sf;
