@@ -728,7 +728,7 @@ void GLITCH_DELAY_EFFECT::process_audio_in_impl( int channel, const int16_t* sam
 void GLITCH_DELAY_EFFECT::process_audio_out_impl( int channel, int16_t* sample_data, int num_samples )
 {
 
-    ASSERT_MSG( !m_play_heads[pi].position_inside_next_read( m_delay_buffer.write_head(), num_samples ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
+    ASSERT_MSG( !m_play_heads[channel].position_inside_next_read( m_delay_buffer.write_head(), num_samples ), "Non - reading over write buffer\n" ); // position after write head is OLD DATA
     m_play_heads[channel].read_from_play_head( sample_data, num_samples );
 }
 
