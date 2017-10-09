@@ -24,4 +24,4 @@ Then simply add one of the following defines to switch between Teensy and Juce
 #define TARGET_JUCE
 ```
 
-I've ported my Glitch Delay Effect to this system, so have a look at the source code for an example of how to use it.
+I've ported my Glitch Delay Effect to this system, so have a look at the source code for an example of how to use it. I use ProJucer to create a project file for my compiler/IDE (xcode in my case).
