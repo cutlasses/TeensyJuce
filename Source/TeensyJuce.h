@@ -23,8 +23,38 @@ class TEENSY_AUDIO_STREAM_WRAPPER : public AudioStream
 protected:
     
     // these are the only functions that require bespoke Teensy code
-    bool                            process_audio_in( int channel );
-    bool                            process_audio_out( int channel );
+    bool                            process_audio_in( int channel )
+    {
+        audio_block_t* read_block        = receiveReadOnly();
+        
+        if( read_block != nullptr )
+        {
+            process_audio_in_impl( channel, read_block->data, AUDIO_BLOCK_SAMPLES );
+            release( read_block );
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    bool                            process_audio_out( int channel )
+    {
+        audio_block_t* write_block = allocate();
+        
+        if( write_block != nullptr )
+        {
+            process_audio_out_impl( channel, write_block->data, AUDIO_BLOCK_SAMPLES );
+            
+            transmit( write_block, channel );
+            
+            release( write_block );
+            
+            return true;
+        }
+        
+        return false;
+    }
     
     // add audio processing code in these 2 functions
     virtual void                    process_audio_in_impl( int channel, const int16_t* sample_data, int num_samples ) = 0;

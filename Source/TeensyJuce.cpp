@@ -38,42 +38,6 @@ namespace
     }
 }
 
-#ifdef TARGET_TEENSY
-
-bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_in( int channel )
-{
-    audio_block_t* read_block        = receiveReadOnly();
-    
-    if( read_block != nullptr )
-    {
-        process_audio_in_impl( channel, read_block->data, AUDIO_BLOCK_SAMPLES );
-        release( read_block );
-        
-        return true;
-    }
-    
-    return false;
-}
-
-bool TEENSY_AUDIO_STREAM_WRAPPER::process_audio_out( int channel )
-{
-    audio_block_t* write_block = allocate();
-    
-    if( write_block != nullptr )
-    {
-        process_audio_out_impl( channel, write_block->data, AUDIO_BLOCK_SAMPLES );
-        
-        transmit( write_block, pi );
-        
-        release( write_block );
-        
-        return true;
-    }
-    
-    return false;
-}
-#endif // TARGET_TEENSY
-
 ////////////////////////////////////////////////////////////////////////
 
 #ifdef TARGET_JUCE
