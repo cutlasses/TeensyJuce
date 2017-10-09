@@ -10,6 +10,8 @@
 
 #include <array>
 
+#include "JuceHeader.h"
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -50,6 +52,9 @@ namespace
 }
 
 //==============================================================================
+
+float TeensyJuceAudioProcessor::MAX_FEEDBACK = 0.85f;
+
 TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
@@ -59,11 +64,39 @@ TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
                       #endif
                        .withOutput ("Output", AudioChannelSet::mono(), true)
                      #endif
-                       )
+                       ),
 #endif
+    m_mix( nullptr ),
+    m_loop_size( nullptr ),
+    m_jitter( nullptr ),
+    m_feedback( nullptr )
 {
     // create the wrapped effect
     m_effect = make_unique< GLITCH_DELAY_EFFECT >();
+    
+    addParameter( m_mix = new AudioParameterFloat(          "mix",          // parameterID
+                                                            "Mix",          // parameter name
+                                                            0.0f,           // minimum value
+                                                            1.0f,           // maximum value
+                                                            0.5f ) );       // default value
+    
+    addParameter( m_loop_size = new AudioParameterFloat(    "loop_size",    // parameterID
+                                                            "Loop Size",    // parameter name
+                                                            0.0f,           // minimum value
+                                                            1.0f,           // maximum value
+                                                            0.5f ) );       // default value
+    
+    addParameter( m_jitter = new AudioParameterFloat(       "jitter",       // parameterID
+                                                            "Jitter",       // parameter name
+                                                            0.0f,           // minimum value
+                                                            1.0f,           // maximum value
+                                                            0.5f ) );       // default value
+    
+    addParameter( m_feedback = new AudioParameterFloat(     "feedback",     // parameterID
+                                                            "Feedback",     // parameter name
+                                                            0.0f,           // minimum value
+                                                            MAX_FEEDBACK,   // maximum value
+                                                            0.5f ) );       // default value
 }
 
 TeensyJuceAudioProcessor::~TeensyJuceAudioProcessor()
@@ -182,11 +215,13 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     else
     {
         // blend feedback into input
-        mix_into( buffer, m_prev_buffer, 0, 0.5f, 0.5f );
+        mix_into( buffer, m_prev_buffer, 0, 1.0f - (*m_feedback), *m_feedback );
     }
     
     m_effect->pre_process_audio( buffer, m_effect->num_input_channels(), m_effect->num_output_channels() );
     
+    m_effect->set_speed( *m_jitter );
+    m_effect->set_loop_size( *m_loop_size );
     m_effect->update();
     
     AudioSampleBuffer output( m_effect->num_output_channels(), buffer.getNumSamples() );
@@ -197,6 +232,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     mix_down( output, mix_weights );
     
     // mix output with original input
+    mix_into( output, buffer, 0, *m_mix, 1.0f - *(m_mix) );
     
     // copy our mixed output to channel 0 of buffer
     buffer.copyFrom( 0, 0, output, 0, 0, output.getNumSamples() );

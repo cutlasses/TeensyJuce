@@ -12,7 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-#include "TeensyJuce.h"
+#include "GlitchDelayEffect.h"
 
 
 //==============================================================================
@@ -59,9 +59,17 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
+
+    static float                                                MAX_FEEDBACK;
     
-    std::unique_ptr<TEENSY_AUDIO_STREAM_WRAPPER>                m_effect;
+    std::unique_ptr<GLITCH_DELAY_EFFECT>                        m_effect;
     AudioSampleBuffer                                           m_prev_buffer;
+    
+    AudioParameterFloat*                                        m_mix;
+    AudioParameterFloat*                                        m_loop_size;
+    AudioParameterFloat*                                        m_jitter;
+    AudioParameterFloat*                                        m_feedback;
+    
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TeensyJuceAudioProcessor)
