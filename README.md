@@ -9,7 +9,7 @@ bool                            process_audio_in( int channel )
 bool                            process_audio_out( int channel )
 ```
 
-This will then call do the Teensy or Juce based audio handling, and call the functions below that you can override with your audio code.
+This will then do the Teensy or Juce based audio handling, and call the functions below that you can override with your audio code.
 
 ```
 // add audio processing code in these 2 functions
