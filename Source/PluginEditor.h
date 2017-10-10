@@ -41,14 +41,17 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     
-    static const int            DIAL_SIZE     = 125;
-    static const int            LABEL_HEIGHT  = 20;
-    static const int            BORDER        = 50;
+    static const int            DIAL_ROW_COUNT;
+    static const int            DIAL_SIZE;
+    static const int            LABEL_HEIGHT;
+    static const int            BORDER;
     
     TeensyJuceAudioProcessor&   m_processor;
     
     OwnedArray<Slider>          m_param_sliders;
     OwnedArray<Label>           m_param_labels;
+    
+    int                         m_num_dial_rows;
     
     void                        timerCallback() override;
 

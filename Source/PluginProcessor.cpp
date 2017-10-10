@@ -69,7 +69,10 @@ TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
     m_mix( nullptr ),
     m_loop_size( nullptr ),
     m_jitter( nullptr ),
-    m_feedback( nullptr )
+    m_feedback( nullptr ),
+    m_low_head(nullptr),
+    m_normal_head(nullptr),
+    m_high_head(nullptr)
 {
     // create the wrapped effect
     m_effect = make_unique< GLITCH_DELAY_EFFECT >();
@@ -96,6 +99,24 @@ TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
                                                             "Feedback",     // parameter name
                                                             0.0f,           // minimum value
                                                             MAX_FEEDBACK,   // maximum value
+                                                            0.5f ) );       // default value
+    
+    addParameter( m_low_head = new AudioParameterFloat(     "low_head",     // parameterID
+                                                            "Low Head",     // parameter name
+                                                            0.0f,           // minimum value
+                                                            1.0f,           // maximum value
+                                                            0.5f ) );       // default value
+    
+    addParameter( m_normal_head = new AudioParameterFloat(  "normal_head",     // parameterID
+                                                            "Normal Head",     // parameter name
+                                                            0.0f,           // minimum value
+                                                            1.0f,           // maximum value
+                                                            0.5f ) );       // default value
+    
+    addParameter( m_high_head = new AudioParameterFloat(    "high_head",     // parameterID
+                                                            "High Head",     // parameter name
+                                                            0.0f,           // minimum value
+                                                            1.0f,           // maximum value
                                                             0.5f ) );       // default value
 }
 

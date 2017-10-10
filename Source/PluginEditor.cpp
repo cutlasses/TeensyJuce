@@ -12,13 +12,20 @@
 #include "PluginEditor.h"
 
 //==============================================================================
+
+const int TeensyJuceAudioProcessorEditor::DIAL_ROW_COUNT    = 4;
+const int TeensyJuceAudioProcessorEditor::DIAL_SIZE         = 95;
+const int TeensyJuceAudioProcessorEditor::LABEL_HEIGHT      = 10;
+const int TeensyJuceAudioProcessorEditor::BORDER            = 40;
+
 TeensyJuceAudioProcessorEditor::TeensyJuceAudioProcessorEditor (TeensyJuceAudioProcessor& p) :
     AudioProcessorEditor(&p),
     Slider::Listener(),
     Timer(),
     m_processor(p),
     m_param_sliders(),
-    m_param_labels()
+    m_param_labels(),
+    m_num_dial_rows(0)
 {
     const OwnedArray<AudioProcessorParameter>& params = p.getParameters();
     
@@ -40,12 +47,19 @@ TeensyJuceAudioProcessorEditor::TeensyJuceAudioProcessorEditor (TeensyJuceAudioP
             Label* label;
             m_param_labels.add( label = new Label (param->name, param->name) );
             label->setJustificationType( Justification::centred );
+            label->setFont( Font(LABEL_HEIGHT) );
             addAndMakeVisible( label );
         }
     }
     
-    const float width   = ( BORDER * 2.0f ) + DIAL_SIZE * m_param_sliders.size();
-    const float height  = ( BORDER * 2.0f ) + DIAL_SIZE;
+    m_num_dial_rows         = m_param_sliders.size() / DIAL_ROW_COUNT;
+    if( m_param_sliders.size() % DIAL_ROW_COUNT != 0 )
+    {
+        ++m_num_dial_rows;
+    }
+    
+    const float width       = ( BORDER * 2.0f ) + DIAL_SIZE * DIAL_ROW_COUNT;
+    const float height      = ( BORDER * 2.0f ) + ( DIAL_SIZE * m_num_dial_rows );
     setSize( width, height );
     
     // start the callback timer
@@ -75,15 +89,27 @@ void TeensyJuceAudioProcessorEditor::paint (Graphics& g)
 
 void TeensyJuceAudioProcessorEditor::resized()
 {
-    Rectangle<int> r = getLocalBounds().reduced( BORDER );
+    Rectangle<int> reduced = getLocalBounds().reduced( BORDER );
     
-    for( int i = 0; i < m_param_sliders.size(); ++i )
+    int dial = 0;
+    
+    for( int row = 0; row < m_num_dial_rows; ++row )
     {
-        Rectangle<int> dial_bounds          = r.removeFromLeft( DIAL_SIZE );
-        const Rectangle<int> label_bounds   = dial_bounds.removeFromBottom( LABEL_HEIGHT );
+        Rectangle<int> row_rect = reduced.removeFromTop( DIAL_SIZE );
         
-        m_param_labels[i]->setBounds( label_bounds );
-        m_param_sliders[i]->setBounds( dial_bounds );
+        const int row_size      = min_val( DIAL_ROW_COUNT, m_param_sliders.size() - dial );
+        const int remainder     = ( DIAL_ROW_COUNT - row_size ) * DIAL_SIZE;
+        row_rect.reduce( remainder / 2, 0 );
+        
+        for( int col = 0; col < row_size; ++col )
+        {
+            Rectangle<int> dial_bounds          = row_rect.removeFromLeft( DIAL_SIZE );
+            const Rectangle<int> label_bounds   = dial_bounds.removeFromBottom( LABEL_HEIGHT );
+            
+            m_param_labels[dial]->setBounds( label_bounds );
+            m_param_sliders[dial]->setBounds( dial_bounds );
+            ++dial;
+        }
     }
 }
 
