@@ -2,6 +2,8 @@
 
 TeensyJuce is intended as a way to prototype Teensy effects in a more fully featured dev environment, to make debugging possible. It uses the JUCE API, so can be compiled on Mac, PC and Linux. It will allow you to compile your Teensy effects as VSTs or Audio Units.
 
+First, install Juce from here https://www.juce.com/get-juce
+
 Simply derive your effect from `TEENSY_AUDIO_STREAM_WRAPPER` rather than `AudioStream`. This parent class handles the internal audio_block_t queue data, so you don't need to define that. Then, rather than making any Teensy audio library calls in your code, call
 
 ```
