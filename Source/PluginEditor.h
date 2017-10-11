@@ -43,6 +43,7 @@ private:
     
     static const int            DIAL_ROW_COUNT;
     static const int            DIAL_SIZE;
+    static const int            DIAL_SEPARATION;
     static const int            LABEL_HEIGHT;
     static const int            BORDER;
     

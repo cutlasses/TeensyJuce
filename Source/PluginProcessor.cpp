@@ -104,20 +104,20 @@ TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
     addParameter( m_low_head = new AudioParameterFloat(     "low_head",     // parameterID
                                                             "Low Head",     // parameter name
                                                             0.0f,           // minimum value
-                                                            1.0f,           // maximum value
-                                                            0.5f ) );       // default value
+                                                            0.33f,          // maximum value
+                                                            0.2f ) );       // default value
     
-    addParameter( m_normal_head = new AudioParameterFloat(  "normal_head",     // parameterID
-                                                            "Normal Head",     // parameter name
+    addParameter( m_normal_head = new AudioParameterFloat(  "normal_head",  // parameterID
+                                                            "Normal Head",  // parameter name
                                                             0.0f,           // minimum value
-                                                            1.0f,           // maximum value
-                                                            0.5f ) );       // default value
+                                                            0.33f,          // maximum value
+                                                            0.33f ) );      // default value
     
-    addParameter( m_high_head = new AudioParameterFloat(    "high_head",     // parameterID
-                                                            "High Head",     // parameter name
+    addParameter( m_high_head = new AudioParameterFloat(    "high_head",    // parameterID
+                                                            "High Head",    // parameter name
                                                             0.0f,           // minimum value
-                                                            1.0f,           // maximum value
-                                                            0.5f ) );       // default value
+                                                            0.33f,          // maximum value
+                                                            0.2f ) );       // default value
 }
 
 TeensyJuceAudioProcessor::~TeensyJuceAudioProcessor()
@@ -249,7 +249,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     m_effect->post_process_audio( output );
     
     // mix down effect output to 1 channel
-    std::array<float, 3> mix_weights = { 0.25f, 0.5f, 0.25f };
+    std::array<float, 3> mix_weights = { *m_low_head, *m_normal_head, *m_high_head };
     mix_down( output, mix_weights );
     
     // mix output with original input

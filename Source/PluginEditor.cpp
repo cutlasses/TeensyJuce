@@ -13,10 +13,11 @@
 
 //==============================================================================
 
-const int TeensyJuceAudioProcessorEditor::DIAL_ROW_COUNT    = 4;
-const int TeensyJuceAudioProcessorEditor::DIAL_SIZE         = 95;
-const int TeensyJuceAudioProcessorEditor::LABEL_HEIGHT      = 10;
-const int TeensyJuceAudioProcessorEditor::BORDER            = 40;
+const int TeensyJuceAudioProcessorEditor::DIAL_ROW_COUNT        = 4;
+const int TeensyJuceAudioProcessorEditor::DIAL_SEPARATION       = 30;
+const int TeensyJuceAudioProcessorEditor::DIAL_SIZE             = 95;
+const int TeensyJuceAudioProcessorEditor::LABEL_HEIGHT          = 10;
+const int TeensyJuceAudioProcessorEditor::BORDER                = 40;
 
 TeensyJuceAudioProcessorEditor::TeensyJuceAudioProcessorEditor (TeensyJuceAudioProcessor& p) :
     AudioProcessorEditor(&p),
@@ -59,7 +60,7 @@ TeensyJuceAudioProcessorEditor::TeensyJuceAudioProcessorEditor (TeensyJuceAudioP
     }
     
     const float width       = ( BORDER * 2.0f ) + DIAL_SIZE * DIAL_ROW_COUNT;
-    const float height      = ( BORDER * 2.0f ) + ( DIAL_SIZE * m_num_dial_rows );
+    const float height      = ( BORDER * 2.0f ) + ( DIAL_SIZE * m_num_dial_rows ) + (DIAL_SEPARATION * (m_num_dial_rows - 1));
     setSize( width, height );
     
     // start the callback timer
@@ -110,6 +111,9 @@ void TeensyJuceAudioProcessorEditor::resized()
             m_param_sliders[dial]->setBounds( dial_bounds );
             ++dial;
         }
+        
+        // leave space between each row
+        reduced.removeFromTop( DIAL_SEPARATION );
     }
 }
 
