@@ -3,7 +3,7 @@
 #include "TeensyJuce.h"
 #include "Util.h"
 
-#define DELAY_BUFFER_SIZE_IN_BYTES     1024*240      // 240k
+static const int DELAY_BUFFER_SIZE_IN_BYTES(1024*240);      // 240k
 
 ////////////////////////////////////
 
@@ -157,6 +157,9 @@ public:
   void                  set_loop_moving( bool moving );
 
   void                  set_beat();
+    
+  int                   num_heads() const;
+  float                 head_position_ratio( int head ) const;
 };
 
 

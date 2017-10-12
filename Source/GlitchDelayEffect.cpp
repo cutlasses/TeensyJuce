@@ -555,7 +555,7 @@ int16_t DELAY_BUFFER::read_sample( int index ) const
     {
       const int8_t* sample_buffer    = reinterpret_cast<const int8_t*>(m_buffer);
 
-      const int offset_index = static_cast<int>( index * 1.5f );
+      const int offset_index         = static_cast<int>( index * 1.5f );
       
       if( index & 1 )
       {
@@ -813,5 +813,33 @@ void GLITCH_DELAY_EFFECT::set_loop_moving( bool moving )
 void GLITCH_DELAY_EFFECT::set_beat()
 {
   m_next_beat = true;
+}
+
+int GLITCH_DELAY_EFFECT::num_heads() const
+{
+    return NUM_PLAY_HEADS + 1; // + 1 for write head
+}
+
+float GLITCH_DELAY_EFFECT::head_position_ratio( int head ) const
+{
+    auto convert_12_bit_sample_to_ratio = []( int sample_index ) -> float
+    {
+        const float ratio = ( sample_index * 1.5f ) / DELAY_BUFFER_SIZE_IN_BYTES;
+        return ratio;
+    };
+    
+    if( head < NUM_PLAY_HEADS )
+    {
+        return convert_12_bit_sample_to_ratio( m_play_heads[head].current_position() );
+    }
+    else if( head == NUM_PLAY_HEADS )
+    {
+        return convert_12_bit_sample_to_ratio( m_delay_buffer.write_head() );
+    }
+    else
+    {
+        DEBUG_TEXT( "Invalid head" );
+        return 0.0f;
+    }
 }
 

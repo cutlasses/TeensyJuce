@@ -243,6 +243,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     m_effect->set_speed( *m_jitter );
     m_effect->set_loop_size( *m_loop_size );
+    m_effect->set_loop_moving(false);
     m_effect->update();
     
     AudioSampleBuffer output( m_effect->num_output_channels(), buffer.getNumSamples() );
@@ -270,7 +271,7 @@ bool TeensyJuceAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* TeensyJuceAudioProcessor::createEditor()
 {
-    return new TeensyJuceAudioProcessorEditor (*this);
+    return new TeensyJuceAudioProcessorEditor (*this, *m_effect);
 }
 
 //==============================================================================
