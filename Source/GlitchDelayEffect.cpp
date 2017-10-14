@@ -521,7 +521,7 @@ void DELAY_BUFFER::write_sample( int16_t sample, int index )
                 const uint8_t prev_byte                  = sample_buffer[ offset_index + 1 ];
                 sample_buffer[ offset_index + 1 ]        = ( sample & 0x00f0 ) | ( prev_byte & 0x000f );
                 
-                ASSERT_MSG( abs( read_sample( index ) - sample ) < 16, "EVEN 12 bit converison failure" );
+                // read sample asserts if you read at the write head ASSERT_MSG( abs( read_sample( index ) - sample ) < 16, "EVEN 12 bit converison failure" );
             }
             
             break;
@@ -538,6 +538,7 @@ void DELAY_BUFFER::write_sample( int16_t sample, int index )
 int16_t DELAY_BUFFER::read_sample( int index ) const
 {
     ASSERT_MSG( index >= 0 && index < m_buffer_size_in_samples, "DELAY_BUFFER::read_sample() writing outside buffer" );
+    ASSERT_MSG( index != m_write_head, "Reading from the write head position, expect a glitch" );
     
     switch( m_sample_size_in_bits )
     {

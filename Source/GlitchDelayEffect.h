@@ -17,7 +17,7 @@ class PLAY_HEAD
     
     float                       m_current_play_head;
     float                       m_destination_play_head;
-    float                       m_play_speed;
+    float                       m_play_speed;       // negative means play in reverse
     int                         m_fade_samples_remaining;
     
     int                         m_loop_start;
@@ -30,7 +30,6 @@ class PLAY_HEAD
     float                       m_jitter_ratio;
     
     bool                        m_initial_loop_crossfade_complete;
-    bool                        m_play_forwards;
     
     int                         play_head_to_write_head_buffer_size() const;
     int16_t                     read_sample_with_cross_fade();
