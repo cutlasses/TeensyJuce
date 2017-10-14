@@ -157,9 +157,10 @@ public:
   void                  set_loop_moving( bool moving );
 
   void                  set_beat();
-    
+  
+  // for plugin display only
   int                   num_heads() const;
-  float                 head_position_ratio( int head ) const;
+  void                  head_ratio_details( int head, float& loop_start, float& loop_end, float& current_position ) const;
 };
 
 

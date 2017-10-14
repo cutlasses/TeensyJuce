@@ -37,8 +37,7 @@ void GLITCH_DELAY_VIEW::update( const GLITCH_DELAY_EFFECT& effect )
     {
         DELAY_HEAD_PROXY& head  = m_heads[h];
         
-        head.m_start            = effect.head_position_ratio( h );
-        head.m_size             = 5.0f;
+        effect.head_ratio_details( h, head.m_start, head.m_end, head.m_current_position );
     }
 }
 
@@ -51,12 +50,49 @@ void GLITCH_DELAY_VIEW::paint( Graphics& g )
     
     for( const DELAY_HEAD_PROXY& head : m_heads )
     {
-        const Point<int> tl( m_tl_x + roundToInt( head.m_start * m_width ), m_tl_y );
-        const Point<int> br( tl.getX() + head.m_size, tl.getY() + m_height );
+        Point<int> tl, br;
+        if( head.m_end == 0.0f )
+        {
+            // write head - fills the entire area in height
+            g.setColour( Colours::goldenrod );
+            tl = Point<int>( m_tl_x + roundToInt( head.m_current_position * m_width ), m_tl_y );
+            br = Point<int>( tl.getX() + 5, tl.getY() + m_height );
+        }
+        else
+        {
+            // draw the current position
+            const Point<int>cp_tl( m_tl_x + roundToInt( head.m_current_position * m_width ), m_tl_y );
+            const Point<int>cp_br ( cp_tl.getX() + 1, cp_tl.getY() + m_height );
+            const Rectangle<int> cp_rect( cp_tl, cp_br );
+            g.fillRect( cp_rect );
+            
+            g.setColour( Colours::lightgrey );
+            const float height_ratio    = 0.65f;
+            const int loop_height       = roundToInt( m_height * height_ratio );
+            const int height_offset     = ( m_height - loop_height ) / 2;
+            tl = Point<int>( m_tl_x + roundToInt( head.m_start * m_width ), m_tl_y + height_offset );
+            br = Point<int>( m_tl_x + roundToInt( head.m_end * m_width ), tl.getY() + loop_height );
+        }
         
-        const Rectangle<int> head_rect( tl, br );
-        
-        g.drawRect( head_rect );
+        if( tl.x < br.x )
+        {
+            const Rectangle<int> head_rect( tl, br );
+            
+            g.fillRect( head_rect );
+        }
+        else
+        {
+            // region crosses the end of the buffer - draw 2 rects
+            const Point<int> new_br( m_tl_x + m_width, br.y );
+            const Rectangle<int> head_rect1( tl, new_br );
+            
+            g.fillRect( head_rect1 );
+            
+            const Point<int> new_tl( m_tl_x, tl.y );
+            const Rectangle<int> head_rect2( new_tl, br );
+            
+            g.fillRect( head_rect2 );
+        }
     }
 }
 

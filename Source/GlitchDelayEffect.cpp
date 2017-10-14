@@ -820,7 +820,7 @@ int GLITCH_DELAY_EFFECT::num_heads() const
     return NUM_PLAY_HEADS + 1; // + 1 for write head
 }
 
-float GLITCH_DELAY_EFFECT::head_position_ratio( int head ) const
+void GLITCH_DELAY_EFFECT::head_ratio_details( int head, float& loop_start, float& loop_end, float& current_position ) const
 {
     auto convert_12_bit_sample_to_ratio = []( int sample_index ) -> float
     {
@@ -830,16 +830,20 @@ float GLITCH_DELAY_EFFECT::head_position_ratio( int head ) const
     
     if( head < NUM_PLAY_HEADS )
     {
-        return convert_12_bit_sample_to_ratio( m_play_heads[head].current_position() );
+        const PLAY_HEAD& play_head = m_play_heads[head];
+        loop_start          = convert_12_bit_sample_to_ratio( play_head.loop_start() );
+        loop_end            = convert_12_bit_sample_to_ratio( play_head.loop_end() );
+        current_position    = convert_12_bit_sample_to_ratio( play_head.current_position() );
     }
     else if( head == NUM_PLAY_HEADS )
     {
-        return convert_12_bit_sample_to_ratio( m_delay_buffer.write_head() );
+        loop_start          = 0;
+        loop_end            = 0;
+        current_position    = convert_12_bit_sample_to_ratio( m_delay_buffer.write_head() );
     }
     else
     {
         DEBUG_TEXT( "Invalid head" );
-        return 0.0f;
     }
 }
 
