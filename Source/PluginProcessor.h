@@ -72,6 +72,7 @@ private:
     AudioParameterFloat*                                        m_low_head;
     AudioParameterFloat*                                        m_normal_head;
     AudioParameterFloat*                                        m_high_head;
+    AudioParameterFloat*                                        m_reverse_head;
     
     
     //==============================================================================

@@ -72,7 +72,8 @@ TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
     m_feedback( nullptr ),
     m_low_head(nullptr),
     m_normal_head(nullptr),
-    m_high_head(nullptr)
+    m_high_head(nullptr),
+    m_reverse_head(nullptr)
 {
     // create the wrapped effect
     m_effect = make_unique< GLITCH_DELAY_EFFECT >();
@@ -104,20 +105,26 @@ TeensyJuceAudioProcessor::TeensyJuceAudioProcessor()
     addParameter( m_low_head = new AudioParameterFloat(     "low_head",     // parameterID
                                                             "Low Head",     // parameter name
                                                             0.0f,           // minimum value
-                                                            0.33f,          // maximum value
-                                                            0.2f ) );       // default value
+                                                            0.25f,          // maximum value
+                                                            0.1f ) );       // default value
     
     addParameter( m_normal_head = new AudioParameterFloat(  "normal_head",  // parameterID
                                                             "Normal Head",  // parameter name
                                                             0.0f,           // minimum value
-                                                            0.33f,          // maximum value
-                                                            0.33f ) );      // default value
+                                                            0.25f,          // maximum value
+                                                            0.2f ) );      // default value
     
     addParameter( m_high_head = new AudioParameterFloat(    "high_head",    // parameterID
                                                             "High Head",    // parameter name
                                                             0.0f,           // minimum value
-                                                            0.33f,          // maximum value
-                                                            0.2f ) );       // default value
+                                                            0.25f,          // maximum value
+                                                            0.1f ) );       // default value
+    
+    addParameter( m_reverse_head = new AudioParameterFloat(    "reverse_head",    // parameterID
+                                                            "Reverse Head",    // parameter name
+                                                            0.0f,           // minimum value
+                                                            0.25f,          // maximum value
+                                                            0.1f ) );       // default value
 }
 
 TeensyJuceAudioProcessor::~TeensyJuceAudioProcessor()
@@ -250,7 +257,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     m_effect->post_process_audio( output );
     
     // mix down effect output to 1 channel
-    std::array<float, 4> mix_weights = { *m_low_head, *m_normal_head, *m_high_head, 1.0f };
+    std::array<float, 4> mix_weights = { *m_low_head, *m_normal_head, *m_high_head, *m_reverse_head };
     mix_down( output, mix_weights );
     
     // mix output with original input
