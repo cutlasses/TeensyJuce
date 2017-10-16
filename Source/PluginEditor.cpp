@@ -21,6 +21,7 @@ GLITCH_DELAY_VIEW::GLITCH_DELAY_VIEW( int num_heads ) :
     m_height(0)
 {
     m_heads.resize( num_heads, DELAY_HEAD_PROXY() );
+    m_heads.back().m_write_head = true;
 }
 
 void GLITCH_DELAY_VIEW::set_dimensions( int x, int y, int width, int height )
@@ -51,10 +52,13 @@ void GLITCH_DELAY_VIEW::paint( Graphics& g )
     for( const DELAY_HEAD_PROXY& head : m_heads )
     {
         Point<int> tl, br;
-        if( head.m_end == 0.0f )
+        if( head.m_start == head.m_end )
         {
-            // write head - fills the entire area in height
-            g.setColour( Colours::goldenrod );
+            // write head (or head without loop) - fills the entire area in height
+            if( head.m_write_head )
+            {
+                g.setColour( Colours::goldenrod );
+            }
             tl = Point<int>( m_tl_x + roundToInt( head.m_current_position * m_width ), m_tl_y );
             br = Point<int>( tl.getX() + 5, tl.getY() + m_height );
         }

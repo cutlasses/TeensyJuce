@@ -250,7 +250,7 @@ void TeensyJuceAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     m_effect->post_process_audio( output );
     
     // mix down effect output to 1 channel
-    std::array<float, 3> mix_weights = { *m_low_head, *m_normal_head, *m_high_head };
+    std::array<float, 4> mix_weights = { *m_low_head, *m_normal_head, *m_high_head, 1.0f };
     mix_down( output, mix_weights );
     
     // mix output with original input

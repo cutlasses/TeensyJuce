@@ -17,7 +17,7 @@ class PLAY_HEAD
     
     float                       m_current_play_head;
     float                       m_destination_play_head;
-    float                       m_play_speed;       // negative means play in reverse
+    float                       m_play_speed;       // negative means play in reverse (loop sections currently not supported)
     int                         m_fade_samples_remaining;
     
     int                         m_loop_start;
@@ -46,12 +46,14 @@ public:
     int                         buffered_loop_start() const;
     int                         current_loop_size() const;
     
+    bool                        looping() const;
     bool                        position_inside_section( int position, int start, int end ) const;
     bool                        position_inside_next_read( int position, int read_size ) const;
     bool                        crossfade_active() const;
     bool                        initial_loop_crossfade_complete() const;
+    bool                        play_forwards() const;
     
-    void                        set_loop_size( float loop_size_in_samples );
+    void                        set_loop_size( float loop_size_ratio );
     void                        set_shift_speed( float speed );
     void                        set_jitter( float jitter );
     void                        set_play_head( int offset_from_write_head );
@@ -118,7 +120,7 @@ public:
 
 class GLITCH_DELAY_EFFECT : public TEENSY_AUDIO_STREAM_WRAPPER
 {
-    static const int NUM_PLAY_HEADS = 3;
+    static const int NUM_PLAY_HEADS = 4;
     
     DELAY_BUFFER          m_delay_buffer;
     

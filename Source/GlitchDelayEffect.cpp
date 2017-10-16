@@ -83,6 +83,13 @@ PLAY_HEAD::PLAY_HEAD( const DELAY_BUFFER& delay_buffer, float play_speed ) :
     m_jitter_ratio( 0.0f ),
     m_initial_loop_crossfade_complete(false)
 {
+    if( play_forwards() )
+    {
+        // all forward playing heads default to looping
+        m_loop_start                    = 0;
+        m_loop_end                      = MAX_LOOP_SIZE_IN_SAMPLES;
+    }
+    
     set_loop_behind_write_head();
     
     // set head immediately (don't want to crossfade initially)
@@ -137,6 +144,17 @@ int PLAY_HEAD::current_loop_size() const
     }
 }
 
+bool PLAY_HEAD::looping() const
+{
+    if( m_loop_start < 0 )
+    {
+        ASSERT_MSG( m_loop_end < 0, "Inconsistent loop state" );
+        return false;
+    }
+    
+    return true;
+}
+
 bool PLAY_HEAD::position_inside_section( int position, int start, int end ) const
 {
     if( end < start )
@@ -161,36 +179,72 @@ bool PLAY_HEAD::position_inside_next_read( int position, int read_size ) const
     if( m_loop_end < 0 || (!m_initial_loop_crossfade_complete && m_fade_samples_remaining > 0) )
     {
         // cross-fading
-        if( m_current_play_head != m_destination_play_head )
+        if( play_forwards() )
         {
-            const int fade_read_size = min_val<int>( read_size, m_fade_samples_remaining ) - 1; // read_size -1 because if 1 sample is read start == end
-            const int current_cf_end = m_delay_buffer.wrap_to_buffer( m_current_play_head + fade_read_size );
-            if( position_inside_section( position, m_current_play_head, current_cf_end ) )
+            if( m_current_play_head != m_destination_play_head )
             {
-                // inside the cross fade from current to destination
-                return true;
+                const int fade_read_size = min_val<int>( read_size, m_fade_samples_remaining ) - 1; // read_size -1 because if 1 sample is read start == end
+                
+                const int current_cf_end = m_delay_buffer.wrap_to_buffer( m_current_play_head + fade_read_size );
+                if( position_inside_section( position, m_current_play_head, current_cf_end ) )
+                {
+                    // inside the cross fade from current to destination
+                    return true;
+                }
+                
+                const int destination_end = m_delay_buffer.wrap_to_buffer( m_destination_play_head + read_size - 1 ); // after fading, destination will become current, read_size samples will be read
+                if( position_inside_section( position, m_destination_play_head, destination_end ) )
+                {
+                    // inside the cross fade from current to destination
+                    return true;
+                }
             }
-            
-            const int destination_end = m_delay_buffer.wrap_to_buffer( m_destination_play_head + read_size - 1 ); // after fading, destination will become current, read_size samples will be read
-            if( position_inside_section( position, m_destination_play_head, destination_end ) )
+            else
             {
-                // inside the cross fade from current to destination
-                return true;
+                // not cross-fading
+                const int read_end = m_delay_buffer.wrap_to_buffer( m_current_play_head + read_size - 1);
+                if( position_inside_section( position, m_current_play_head, read_end ) )
+                {
+                    return true;
+                }
             }
         }
         else
         {
-            // not cross-fading
-            const int read_end = m_delay_buffer.wrap_to_buffer( m_current_play_head + read_size - 1);
-            if( position_inside_section( position, m_current_play_head, read_end ) )
+            if( m_current_play_head != m_destination_play_head )
             {
-                return true;
+                const int fade_read_size = min_val<int>( read_size, m_fade_samples_remaining ) - 1; // read_size -1 because if 1 sample is read start == end
+                
+                const int current_cf_start = m_delay_buffer.wrap_to_buffer( m_current_play_head - fade_read_size );
+                if( position_inside_section( position, current_cf_start, m_current_play_head ) )
+                {
+                    // inside the cross fade from current to destination
+                    return true;
+                }
+                
+                const int destination_end = m_delay_buffer.wrap_to_buffer( m_destination_play_head - read_size - 1 ); // after fading, destination will become current, read_size samples will be read
+                if( position_inside_section( position, destination_end, m_destination_play_head ) )
+                {
+                    // inside the cross fade from current to destination
+                    return true;
+                }
+            }
+            else
+            {
+                // not cross-fading
+                const int read_end = m_delay_buffer.wrap_to_buffer( m_current_play_head - read_size - 1);
+                if( position_inside_section( position, read_end, m_current_play_head ) )
+                {
+                    return true;
+                }
             }
         }
     }
     // otherwise looping
     else
     {
+        ASSERT_MSG( play_forwards(), "Loop not supported playing forwards" );
+        
         // NOTE this tests entire loop NOT next read per-se
         const int loop_end_cf_end = m_delay_buffer.wrap_to_buffer( m_loop_end + FIXED_FADE_TIME_SAMPLES - 1 );
         if( position_inside_section( position, m_loop_start, loop_end_cf_end ) )
@@ -232,6 +286,11 @@ bool PLAY_HEAD::initial_loop_crossfade_complete() const
     return m_initial_loop_crossfade_complete;
 }
 
+bool PLAY_HEAD::play_forwards() const
+{
+    return m_play_speed > 0.0f;
+}
+
 bool PLAY_HEAD::crossfade_active() const
 {
     return m_current_play_head != m_destination_play_head;
@@ -239,6 +298,7 @@ bool PLAY_HEAD::crossfade_active() const
 
 void PLAY_HEAD::set_next_loop()
 {
+    ASSERT_MSG( play_forwards(), "Loop not supported playing forwards" );
     ASSERT_MSG( m_loop_start >= 0, "PLAY_HEAD::read_from_play_head() invalid loop start" );
     ASSERT_MSG( m_initial_loop_crossfade_complete, "looping before we've finished the cross-fade into the loop\n" );
     ASSERT_MSG( !crossfade_active(), "starting new loop whist still cross fading" );
@@ -313,9 +373,9 @@ int16_t PLAY_HEAD::read_sample_with_cross_fade()
     return sample;
 }
 
-void PLAY_HEAD::set_loop_size( float loop_size_in_samples )
+void PLAY_HEAD::set_loop_size( float loop_size_ratio )
 {
-    m_next_loop_size_ratio = loop_size_in_samples;
+    m_next_loop_size_ratio = loop_size_ratio;
 }
 
 void PLAY_HEAD::set_shift_speed( float speed )
@@ -349,15 +409,25 @@ void PLAY_HEAD::set_play_head( int new_play_head )
 
 void PLAY_HEAD::set_loop_behind_write_head()
 {
-    const int loop_size                     = current_loop_size();
-    int loop_end                            = m_delay_buffer.write_head() - ( play_head_to_write_head_buffer_size() + m_shift_speed );
-    loop_end                                = m_delay_buffer.wrap_to_buffer( loop_end );
-    const int loop_start                    = m_delay_buffer.wrap_to_buffer( loop_end - loop_size );
-    
-    ASSERT_MSG( loop_size + FIXED_FADE_TIME_SAMPLES + 1 < DELAY_BUFFER_SIZE_IN_BYTES, "Loop size too large\n" );
-    ASSERT_MSG( loop_size > FIXED_FADE_TIME_SAMPLES * 2, "Loop size too small\n" );
-    
-    enable_loop( loop_start, loop_end );
+    if( looping() )
+    {
+        const int loop_size                     = current_loop_size();
+        int loop_end                            = m_delay_buffer.write_head() - ( play_head_to_write_head_buffer_size() + m_shift_speed );
+        loop_end                                = m_delay_buffer.wrap_to_buffer( loop_end );
+        const int loop_start                    = m_delay_buffer.wrap_to_buffer( loop_end - loop_size );
+        
+        ASSERT_MSG( loop_size + FIXED_FADE_TIME_SAMPLES + 1 < DELAY_BUFFER_SIZE_IN_BYTES, "Loop size too large\n" );
+        ASSERT_MSG( loop_size > FIXED_FADE_TIME_SAMPLES * 2, "Loop size too small\n" );
+        
+        enable_loop( loop_start, loop_end );
+    }
+    else
+    {
+        int position                           = m_delay_buffer.write_head() - ( play_head_to_write_head_buffer_size() + m_shift_speed );
+        m_destination_play_head                = m_delay_buffer.wrap_to_buffer( position );
+        m_current_play_head                    = m_destination_play_head;
+        m_fade_samples_remaining               = FIXED_FADE_TIME_SAMPLES;
+    }
 }
 
 void PLAY_HEAD::read_from_play_head( int16_t* dest, int size )
@@ -381,6 +451,8 @@ void PLAY_HEAD::read_from_play_head( int16_t* dest, int size )
 
 void PLAY_HEAD::enable_loop( int start, int end )
 {
+    ASSERT_MSG( play_forwards(), "Looping only currently supported on playing forwards" );
+    
     m_loop_start            = start;
     m_loop_end              = end;
     m_unjittered_loop_start = start;
@@ -635,6 +707,10 @@ void DELAY_BUFFER::increment_head( float& head, float speed ) const
         const float rem         = head - m_buffer_size_in_samples;
         head                    = rem;
     }
+    else if( head < 0.0f )
+    {
+        head                    = m_buffer_size_in_samples + head;
+    }
     
     ASSERT_MSG( truncf(head) >= 0 && truncf(head) < m_buffer_size_in_samples, "DELAY_BUFFER::increment_head()" );
     
@@ -711,7 +787,7 @@ void DELAY_BUFFER::debug_output()
 
 GLITCH_DELAY_EFFECT::GLITCH_DELAY_EFFECT() :
     m_delay_buffer(),
-    m_play_heads{ PLAY_HEAD( m_delay_buffer, 0.5f ), PLAY_HEAD( m_delay_buffer, 1.0f ), PLAY_HEAD( m_delay_buffer, 2.0f ) },
+    m_play_heads{ PLAY_HEAD( m_delay_buffer, 0.5f ), PLAY_HEAD( m_delay_buffer, 1.0f ), PLAY_HEAD( m_delay_buffer, 2.0f ), PLAY_HEAD( m_delay_buffer, -1.0f ) },
     m_speed_ratio(1.0f),
     m_speed_in_samples(MAX_SHIFT_SPEED),
     m_loop_size_ratio(1.0f),
@@ -745,37 +821,55 @@ int GLITCH_DELAY_EFFECT::num_input_channels() const
 
 int GLITCH_DELAY_EFFECT::num_output_channels() const
 {
-    return 3;
+    return NUM_PLAY_HEADS;
 }
 
 void GLITCH_DELAY_EFFECT::update()
 {
+    static int num_updates(0);
+    ++num_updates;
+    
     m_delay_buffer.set_bit_depth( m_next_sample_size_in_bits );
     m_loop_moving               = m_next_loop_moving;
     
     for( int pi = 0; pi < NUM_PLAY_HEADS; ++pi )
     {
+        PLAY_HEAD& play_head = m_play_heads[pi];
         if( m_loop_moving )
         {
-            m_play_heads[pi].set_shift_speed( m_speed_ratio );
+            play_head.set_shift_speed( m_speed_ratio );
         }
         else
         {
-            m_play_heads[pi].set_shift_speed( 0.0f );
-            m_play_heads[pi].set_jitter( m_speed_ratio );
+            play_head.set_shift_speed( 0.0f );
+            play_head.set_jitter( m_speed_ratio );
         }
         
-        m_play_heads[pi].set_loop_size( m_loop_size_ratio );
+        play_head.set_loop_size( m_loop_size_ratio );
         
-        // check whether the write head is about to run over the read head, in which case cross fade read head to new position
-        if( m_play_heads[pi].position_inside_section( m_delay_buffer.write_head(), m_play_heads[pi].buffered_loop_start(), m_play_heads[pi].loop_end() ) )
+        if( m_next_beat && play_head.play_forwards() && !play_head.crossfade_active() ) // let the reverse head play regardless of beats
         {
-            m_play_heads[pi].set_loop_behind_write_head();
+            play_head.set_next_loop();
+            play_head.set_loop_behind_write_head();
         }
-        else if( m_next_beat && !m_play_heads[pi].crossfade_active() )
+        else
         {
-            m_play_heads[pi].set_next_loop();
-            m_play_heads[pi].set_loop_behind_write_head();
+            // TODO Move to PLAY_HEAD object
+            // check whether the write head is about to run over the read head, in which case cross fade read head to new position
+            if( play_head.looping() )
+            {
+                if( play_head.position_inside_section( m_delay_buffer.write_head(), play_head.buffered_loop_start(), play_head.loop_end() ) )
+                {
+                    play_head.set_loop_behind_write_head();
+                }
+            }
+            else
+            {
+                if( play_head.position_inside_next_read( m_delay_buffer.write_head(), AUDIO_BLOCK_SAMPLES * 2 ) )
+                {
+                    play_head.set_loop_behind_write_head();
+                }
+            }
         }
     }
     m_next_beat = false;
@@ -832,8 +926,17 @@ void GLITCH_DELAY_EFFECT::head_ratio_details( int head, float& loop_start, float
     if( head < NUM_PLAY_HEADS )
     {
         const PLAY_HEAD& play_head = m_play_heads[head];
-        loop_start          = convert_12_bit_sample_to_ratio( play_head.loop_start() );
-        loop_end            = convert_12_bit_sample_to_ratio( play_head.loop_end() );
+        
+        if( play_head.loop_start() >= 0 )
+        {
+            loop_start      = convert_12_bit_sample_to_ratio( play_head.loop_start() );
+            loop_end        = convert_12_bit_sample_to_ratio( play_head.loop_end() );
+        }
+        else
+        {
+            loop_start      = 0;
+            loop_end        = 0;
+        }
         current_position    = convert_12_bit_sample_to_ratio( play_head.current_position() );
     }
     else if( head == NUM_PLAY_HEADS )

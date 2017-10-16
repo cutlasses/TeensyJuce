@@ -28,13 +28,15 @@ class GLITCH_DELAY_VIEW
         DELAY_HEAD_PROXY() :
             m_start( 0.0f ),
             m_end( 0.0f ),
-            m_current_position( 0.0f )
+            m_current_position( 0.0f ),
+            m_write_head(false)
         {
         }
         
         float                           m_start;
         float                           m_end;
         float                           m_current_position;
+        bool                            m_write_head;
     };
     
     std::vector< DELAY_HEAD_PROXY >     m_heads;
