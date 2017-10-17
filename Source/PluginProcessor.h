@@ -68,12 +68,7 @@ private:
     AudioParameterFloat*                                        m_mix;
     AudioParameterFloat*                                        m_loop_size;
     AudioParameterFloat*                                        m_jitter;
-    AudioParameterFloat*                                        m_feedback;
-    AudioParameterFloat*                                        m_low_head;
-    AudioParameterFloat*                                        m_normal_head;
-    AudioParameterFloat*                                        m_high_head;
-    AudioParameterFloat*                                        m_reverse_head;
-    
+	AudioParameterFloat*                                        m_feedback;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TeensyJuceAudioProcessor)
