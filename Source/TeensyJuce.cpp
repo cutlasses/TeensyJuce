@@ -16,17 +16,17 @@
 namespace
 {
     // convert float sample [-1..1] to int16
-    int16_t sample_convert_float_to_int16( float s )
-    {
-        if( s > 0.0f )
-        {
-            return s * std::numeric_limits< int16_t >::max();
-        }
-        else
-        {
-            return s * std::numeric_limits< int16_t >::min();
-        }
-    }
+	int16_t sample_convert_float_to_int16( float s )
+	{
+		if( s > 0.0f )
+		{
+			return s * std::numeric_limits< int16_t >::max();
+		}
+		else
+		{
+			return -s * std::numeric_limits< int16_t >::min();
+		}
+	}
     
     // convert in16 sample to float [-1..1]
     float sample_convert_int16_to_float( int16_t s )
